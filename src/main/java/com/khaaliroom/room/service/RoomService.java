@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -111,6 +112,27 @@ public class RoomService {
         Room updatedRoom = roomRepository.save(room);
 
         return toResponse(updatedRoom);
+    }
+
+    @Transactional(readOnly = true)
+    public RoomPageResponse findMyRooms(
+            UUID ownerId,
+            Pageable pageable) {
+
+        Page<RoomResponse> roomPage =
+                roomRepository
+                        .findByOwnerId(ownerId, pageable)
+                        .map(this::toResponse);
+
+        return new RoomPageResponse(
+                roomPage.getContent(),
+                roomPage.getNumber(),
+                roomPage.getSize(),
+                roomPage.getTotalElements(),
+                roomPage.getTotalPages(),
+                roomPage.isFirst(),
+                roomPage.isLast()
+        );
     }
 
     private RoomResponse toResponse(Room room) {

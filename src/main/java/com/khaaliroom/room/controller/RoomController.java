@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -202,5 +203,62 @@ public class RoomController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<RoomPageResponse> getMyRooms(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+
+        if (page < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page must be greater than or equal to 0"
+            );
+        }
+
+        if (size < 1 || size > 50) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Size must be between 1 and 50"
+            );
+        }
+
+        if (!sortBy.equals("createdAt")
+                && !sortBy.equals("monthlyRent")
+                && !sortBy.equals("availableFrom")) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sortBy. Allowed values: createdAt, monthlyRent, availableFrom"
+            );
+        }
+
+        Sort.Direction direction;
+
+        try {
+            direction = Sort.Direction.fromString(sortDirection);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sortDirection. Allowed values: asc, desc"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(direction, sortBy)
+        );
+
+        UUID ownerId = UUID.fromString(authentication.getName());
+
+        RoomPageResponse rooms =
+                roomService.findMyRooms(ownerId, pageable);
+
+        return ResponseEntity.ok(rooms);
     }
 }
