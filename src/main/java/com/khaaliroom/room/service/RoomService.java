@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -133,6 +132,24 @@ public class RoomService {
                 roomPage.isFirst(),
                 roomPage.isLast()
         );
+    }
+
+    @Transactional
+    public void deleteRoom(
+            UUID roomId,
+            UUID authenticatedUserId) {
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Room not found"));
+
+        if (!room.getOwnerId().equals(authenticatedUserId)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to delete this room"
+            );
+        }
+
+        roomRepository.delete(room);
     }
 
     private RoomResponse toResponse(Room room) {

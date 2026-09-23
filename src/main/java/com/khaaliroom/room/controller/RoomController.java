@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,18 +25,6 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
-
-//    @PostMapping
-//    public ResponseEntity<RoomResponse> createRoom(
-//            @RequestParam UUID ownerId,
-//            @Valid @RequestBody RoomCreateRequest request) {
-//
-//        RoomResponse response = roomService.createRoom(ownerId, request);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(response);
-//    }
 
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(
@@ -260,5 +247,33 @@ public class RoomController {
                 roomService.findMyRooms(ownerId, pageable);
 
         return ResponseEntity.ok(rooms);
+    }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<Void> deleteRoom(
+            @PathVariable UUID roomId,
+            Authentication authentication) {
+
+        boolean isOwner = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_OWNER")
+                );
+
+        if (!isOwner) {
+            throw new AccessDeniedException(
+                    "Only room owners can delete rooms"
+            );
+        }
+
+        UUID authenticatedUserId =
+                UUID.fromString(authentication.getName());
+
+        roomService.deleteRoom(
+                roomId,
+                authenticatedUserId
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }
