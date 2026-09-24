@@ -4,6 +4,10 @@ import com.khaaliroom.room.dto.*;
 import com.khaaliroom.room.entity.FurnishingType;
 import com.khaaliroom.room.entity.RoomType;
 import com.khaaliroom.room.service.RoomService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +30,29 @@ public class RoomController {
 
     private final RoomService roomService;
 
+    @Operation(
+            summary = "Create a new room",
+            description = "Creates a new room listing. Only authenticated users with the OWNER role can create rooms."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Room created successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid room data"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Only room owners can create rooms"
+            )
+    })
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(
             Authentication authentication,
@@ -53,6 +80,24 @@ public class RoomController {
                 .body(response);
     }
 
+    @Operation(
+            summary = "Get room details",
+            description = "Returns the details of a specific room listing by room ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Room details retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid room ID"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
     @GetMapping("/{roomId}")
     public ResponseEntity<RoomResponse> getRoom(
             @PathVariable UUID roomId) {
@@ -62,6 +107,20 @@ public class RoomController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Search available rooms",
+            description = "Returns available room listings with optional filters, pagination, and sorting."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Available rooms retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid pagination, sorting, or filter parameters"
+            )
+    })
     @GetMapping
     public ResponseEntity<RoomPageResponse> getAvailableRooms(
             @RequestParam(required = false) String city,
@@ -130,6 +189,33 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
+    @Operation(
+            summary = "Update room status",
+            description = "Updates the status of a room listing. Only the owner of the room can change its status."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Room status updated successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid room status or room ID"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the owner of the room"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/{roomId}/status")
     public ResponseEntity<RoomResponse> updateRoomStatus(
             @PathVariable UUID roomId,
@@ -161,6 +247,33 @@ public class RoomController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Update a room listing",
+            description = "Updates an existing room listing. Only the owner of the room can update it."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Room updated successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid room data or room ID"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the owner of the room"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/{roomId}")
     public ResponseEntity<RoomResponse> updateRoom(
             @PathVariable UUID roomId,
@@ -192,6 +305,25 @@ public class RoomController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Get my room listings",
+            description = "Returns the authenticated user's room listings with pagination and sorting."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User's room listings retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid pagination or sorting parameters"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            )
+    })
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/my")
     public ResponseEntity<RoomPageResponse> getMyRooms(
             Authentication authentication,
@@ -249,6 +381,33 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
+    @Operation(
+            summary = "Delete a room listing",
+            description = "Deletes an existing room listing. Only the owner of the room can delete it."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Room deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid room ID"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the owner of the room"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{roomId}")
     public ResponseEntity<Void> deleteRoom(
             @PathVariable UUID roomId,
