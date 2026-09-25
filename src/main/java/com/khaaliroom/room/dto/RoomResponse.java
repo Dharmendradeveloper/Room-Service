@@ -84,14 +84,15 @@ public record RoomResponse(
         )
         LocalDate availableFrom,
 
+
         @Schema(
                 description = """
-                New status for the room listing.
-                AVAILABLE = Room is currently available for rent.
-                FILLED = Room has been occupied by a tenant.
-                DISABLED = Listing is temporarily hidden or inactive.
-                """,
-                example = "FILLED"
+                        Current status of the room listing.
+                        AVAILABLE = Room is currently available for rent.
+                        FILLED = Room has been occupied by a tenant.
+                        DISABLED = Listing is temporarily hidden or inactive.
+                        """,
+                example = "AVAILABLE"
         )
         RoomStatus status,
 

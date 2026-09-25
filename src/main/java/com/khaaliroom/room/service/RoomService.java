@@ -12,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -73,6 +75,11 @@ public class RoomService {
                     "You are not authorized to modify this room"
             );
         }
+
+        validateStatusTransition(
+                room.getStatus(),
+                request.status()
+        );
 
         room.setStatus(request.status());
 
@@ -236,5 +243,36 @@ public class RoomService {
                 roomPage.isFirst(),
                 roomPage.isLast()
         );
+    }
+
+    private void validateStatusTransition(
+            RoomStatus currentStatus,
+            RoomStatus newStatus) {
+
+        if (currentStatus == newStatus) {
+            return;
+        }
+
+        boolean validTransition =
+                switch (currentStatus) {
+
+                    case AVAILABLE ->
+                            newStatus == RoomStatus.FILLED
+                                    || newStatus == RoomStatus.DISABLED;
+
+                    case DISABLED, FILLED ->
+                            newStatus == RoomStatus.AVAILABLE;
+
+                };
+
+        if (!validTransition) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid room status transition from "
+                            + currentStatus
+                            + " to "
+                            + newStatus
+            );
+        }
     }
 }

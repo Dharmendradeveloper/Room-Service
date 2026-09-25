@@ -5,6 +5,8 @@ import com.khaaliroom.room.entity.FurnishingType;
 import com.khaaliroom.room.entity.RoomType;
 import com.khaaliroom.room.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,19 +39,35 @@ public class RoomController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201",
-                    description = "Room created successfully"
+                    description = "Room created successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RoomResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid room data"
+                    description = "Invalid room data",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "Only room owners can create rooms"
+                    description = "Only room owners can create rooms",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @SecurityRequirement(name = "bearerAuth")
@@ -91,11 +109,19 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid room ID"
+                    description = "Invalid room ID",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Room not found"
+                    description = "Room not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @GetMapping("/{roomId}")
@@ -118,7 +144,11 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid pagination, sorting, or filter parameters"
+                    description = "Invalid pagination, sorting, or filter parameters",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @GetMapping
@@ -200,19 +230,35 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid room status or room ID"
+                    description = "Invalid room status or room ID",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "User is not the owner of the room"
+                    description = "User is not the owner of the room",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Room not found"
+                    description = "Room not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @SecurityRequirement(name = "bearerAuth")
@@ -258,19 +304,35 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid room data or room ID"
+                    description = "Invalid room data or room ID",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "User is not the owner of the room"
+                    description = "User is not the owner of the room",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Room not found"
+                    description = "Room not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @SecurityRequirement(name = "bearerAuth")
@@ -316,11 +378,19 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid pagination or sorting parameters"
+                    description = "Invalid pagination or sorting parameters",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @SecurityRequirement(name = "bearerAuth")
@@ -392,19 +462,35 @@ public class RoomController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid room ID"
+                    description = "Invalid room ID",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "User is not the owner of the room"
+                    description = "User is not the owner of the room",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Room not found"
+                    description = "Room not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiErrorResponse.class)
+                    )
             )
     })
     @SecurityRequirement(name = "bearerAuth")
