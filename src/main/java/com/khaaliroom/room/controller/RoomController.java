@@ -3,8 +3,10 @@ package com.khaaliroom.room.controller;
 import com.khaaliroom.room.dto.*;
 import com.khaaliroom.room.entity.FurnishingType;
 import com.khaaliroom.room.entity.RoomType;
+import com.khaaliroom.room.service.RoomImageService;
 import com.khaaliroom.room.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,6 +34,7 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
+    private final RoomImageService roomImageService;
 
     @Operation(
             summary = "Create a new room",
@@ -520,5 +524,93 @@ public class RoomController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{roomId}/images")
+    @Operation(
+            summary = "Get room images",
+            description = "Returns all images belonging to a room ordered by display order."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Room images retrieved successfully"
+            )
+    })
+    public ResponseEntity<List<RoomImageResponse>> getRoomImages(
+            @Parameter(
+                    description = "Unique identifier of the room",
+                    example = "580fe919-5182-4288-a60f-ea998b35ae54"
+            )
+            @PathVariable UUID roomId) {
+
+        List<RoomImageResponse> images =
+                roomImageService.getRoomImages(roomId);
+
+        return ResponseEntity.ok(images);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{roomId}/images")
+    @Operation(
+            summary = "Add room image",
+            description = "Adds image metadata to a room. Only the room owner can add images."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Room image added successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the room owner"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    public ResponseEntity<RoomImageResponse> createRoomImage(
+
+            @Parameter(
+                    description = "Unique identifier of the room",
+                    example = "580fe919-5182-4288-a60f-ea998b35ae54"
+            )
+            @PathVariable UUID roomId,
+
+            @Valid @RequestBody RoomImageCreateRequest request,
+
+            Authentication authentication) {
+
+        if (!authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_OWNER"))) {
+
+            throw new AccessDeniedException(
+                    "Only room owners can add images"
+            );
+        }
+
+        UUID authenticatedUserId =
+                UUID.fromString(authentication.getName());
+
+        RoomImageResponse response =
+                roomImageService.createRoomImage(
+                        roomId,
+                        authenticatedUserId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }
