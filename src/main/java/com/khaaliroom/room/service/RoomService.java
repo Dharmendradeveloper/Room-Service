@@ -1,11 +1,9 @@
 package com.khaaliroom.room.service;
 
 import com.khaaliroom.room.dto.*;
-import com.khaaliroom.room.entity.FurnishingType;
-import com.khaaliroom.room.entity.Room;
-import com.khaaliroom.room.entity.RoomStatus;
-import com.khaaliroom.room.entity.RoomType;
+import com.khaaliroom.room.entity.*;
 import com.khaaliroom.room.exception.ResourceNotFoundException;
+import com.khaaliroom.room.repository.RoomImageRepository;
 import com.khaaliroom.room.repository.RoomRepository;
 import com.khaaliroom.room.specification.RoomSpecification;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -26,6 +26,8 @@ import java.util.UUID;
 public class RoomService {
 
     private final RoomRepository roomRepository;
+    private final RoomImageRepository roomImageRepository;
+    private final S3Service s3Service;
 
     @Transactional
     public RoomResponse createRoom(UUID ownerId, RoomCreateRequest request) {
@@ -80,6 +82,19 @@ public class RoomService {
                 room.getStatus(),
                 request.status()
         );
+
+        if (request.status() == RoomStatus.AVAILABLE) {
+
+            long imageCount =
+                    roomImageRepository.countByRoomId(roomId);
+
+            if (imageCount < 1) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A room must have at least 1 image before it can be made available"
+                );
+            }
+        }
 
         room.setStatus(request.status());
 
@@ -156,6 +171,16 @@ public class RoomService {
             );
         }
 
+        List<RoomImage> images =
+                roomImageRepository
+                        .findByRoomIdOrderByDisplayOrderAsc(roomId);
+
+        for (RoomImage image : images) {
+            s3Service.deleteObject(image.getObjectKey());
+        }
+
+        roomImageRepository.deleteAll(images);
+
         roomRepository.delete(room);
     }
 
@@ -188,6 +213,7 @@ public class RoomService {
             BigDecimal maxRent,
             RoomType roomType,
             FurnishingType furnishing,
+            LocalDate availableFrom,
             Pageable pageable) {
 
         Specification<Room> specification =
@@ -229,6 +255,14 @@ public class RoomService {
             );
         }
 
+        if (availableFrom != null) {
+            specification = specification.and(
+                    RoomSpecification.availableFromOnOrBefore(
+                            availableFrom
+                    )
+            );
+        }
+
         Page<RoomResponse> roomPage =
                 roomRepository
                         .findAll(specification, pageable)
@@ -256,12 +290,10 @@ public class RoomService {
         boolean validTransition =
                 switch (currentStatus) {
 
-                    case AVAILABLE ->
-                            newStatus == RoomStatus.FILLED
-                                    || newStatus == RoomStatus.DISABLED;
+                    case AVAILABLE -> newStatus == RoomStatus.FILLED
+                            || newStatus == RoomStatus.DISABLED;
 
-                    case DISABLED, FILLED ->
-                            newStatus == RoomStatus.AVAILABLE;
+                    case DISABLED, FILLED -> newStatus == RoomStatus.AVAILABLE;
 
                 };
 

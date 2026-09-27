@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -165,6 +166,8 @@ public class RoomController {
             @RequestParam(required = false) BigDecimal maxRent,
             @RequestParam(required = false) RoomType roomType,
             @RequestParam(required = false) FurnishingType furnishing,
+            @RequestParam(required = false)
+            LocalDate availableFrom,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -219,6 +222,7 @@ public class RoomController {
                         maxRent,
                         roomType,
                         furnishing,
+                        availableFrom,
                         pageable
                 );
 

@@ -7,6 +7,7 @@ import com.khaaliroom.room.entity.RoomType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public final class RoomSpecification {
 
@@ -58,5 +59,15 @@ public final class RoomSpecification {
     public static Specification<Room> hasFurnishing(FurnishingType furnishing) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("furnishing"), furnishing);
+    }
+
+    public static Specification<Room> availableFromOnOrBefore(
+            LocalDate date) {
+
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.lessThanOrEqualTo(
+                        root.get("availableFrom"),
+                        date
+                );
     }
 }

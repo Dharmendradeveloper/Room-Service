@@ -68,10 +68,16 @@ public class RoomImageService {
             );
         }
 
+        String objectKey =
+                findObjectKey(roomId, request.imageId());
+
         long imageCount =
                 roomImageRepository.countByRoomId(roomId);
 
         if (imageCount >= 4) {
+
+            s3Service.deleteObject(objectKey);
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A room can have a maximum of 4 images"
@@ -82,6 +88,8 @@ public class RoomImageService {
                 roomId,
                 request.displayOrder())) {
 
+            s3Service.deleteObject(objectKey);
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Display order "
@@ -90,8 +98,22 @@ public class RoomImageService {
             );
         }
 
-        String objectKey =
-                findObjectKey(roomId, request.imageId());
+        String contentType =
+                s3Service.getObjectContentType(objectKey);
+
+        if (!List.of(
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+        ).contains(contentType)) {
+
+            s3Service.deleteObject(objectKey);
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported image content type"
+            );
+        }
 
         try {
             s3Service.validateImageSize(objectKey);
@@ -118,6 +140,7 @@ public class RoomImageService {
         RoomImage image = RoomImage.builder()
                 .roomId(roomId)
                 .objectKey(objectKey)
+                .contentType(contentType)
                 .displayOrder(request.displayOrder())
                 .build();
 

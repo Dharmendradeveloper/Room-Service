@@ -100,9 +100,6 @@ public record RoomUpdateRequest(
         )
         FurnishingType furnishing,
 
-        @FutureOrPresent(
-                message = "Available from date cannot be in the past"
-        )
         @Schema(
                 description = "Date from which the room is available",
                 example = "2026-10-01"

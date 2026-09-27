@@ -9,8 +9,14 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "room_images",
-        indexes = {
-                @Index(name = "idx_room_images_room_id", columnList = "room_id")
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_room_images_room_display_order",
+                        columnNames = {
+                                "room_id",
+                                "display_order"
+                        }
+                )
         }
 )
 @Getter
@@ -29,6 +35,9 @@ public class RoomImage {
 
     @Column(name = "object_key", nullable = false, length = 1000)
     private String objectKey;
+
+    @Column(name = "content_type", nullable = false, length = 100)
+    private String contentType;
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;

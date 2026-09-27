@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,6 +35,17 @@ public class S3Service {
     public RoomImageUploadResponse generateUploadUrl(
             UUID roomId,
             String contentType) {
+
+        if (!List.of(
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+        ).contains(contentType.toLowerCase())) {
+
+            throw new IllegalArgumentException(
+                    "Unsupported image content type: " + contentType
+            );
+        }
 
         UUID imageId = UUID.randomUUID();
 
@@ -84,6 +96,14 @@ public class S3Service {
                         .build();
 
         return s3Client.headObject(request);
+    }
+
+    public String getObjectContentType(String objectKey) {
+
+        HeadObjectResponse metadata =
+                getObjectMetadata(objectKey);
+
+        return metadata.contentType();
     }
 
     public void validateImageSize(
