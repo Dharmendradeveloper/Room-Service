@@ -5,6 +5,7 @@ import com.khaaliroom.room.entity.FurnishingType;
 import com.khaaliroom.room.entity.RoomType;
 import com.khaaliroom.room.service.RoomImageService;
 import com.khaaliroom.room.service.RoomService;
+import com.khaaliroom.room.service.S3Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,6 +36,7 @@ public class RoomController {
 
     private final RoomService roomService;
     private final RoomImageService roomImageService;
+    private final S3Service s3Service;
 
     @Operation(
             summary = "Create a new room",
@@ -612,5 +614,143 @@ public class RoomController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{roomId}/images/upload-url")
+    @Operation(
+            summary = "Generate room image upload URL",
+            description = """
+                Generates a temporary presigned S3 URL for uploading
+                a room image. Only the room owner can request an
+                upload URL. The URL expires after 10 minutes.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Upload URL generated successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the room owner"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    public ResponseEntity<RoomImageUploadResponse> generateImageUploadUrl(
+
+            @Parameter(
+                    description = "Unique identifier of the room",
+                    example = "1dc1071f-ccc3-4b26-a598-63ab37293658"
+            )
+            @PathVariable UUID roomId,
+
+            @Valid @RequestBody RoomImageUploadRequest request,
+
+            Authentication authentication) {
+
+        if (!authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_OWNER"))) {
+
+            throw new AccessDeniedException(
+                    "Only room owners can upload images"
+            );
+        }
+
+        UUID authenticatedUserId =
+                UUID.fromString(authentication.getName());
+
+        roomService.verifyRoomOwner(
+                roomId,
+                authenticatedUserId
+        );
+
+        RoomImageUploadResponse response =
+                s3Service.generateUploadUrl(
+                        roomId,
+                        request.contentType()
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{roomId}/images/complete")
+    @Operation(
+            summary = "Complete room image upload",
+            description = """
+                Completes a room image upload after the client has
+                uploaded the image directly to S3 using the presigned URL.
+                The server verifies that the image exists in S3 and that
+                its size does not exceed 500 KB before saving the image
+                metadata to PostgreSQL.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Image upload completed successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request, image not found in S3, image too large, or display order already in use"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the room owner"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room not found"
+            )
+    })
+    public ResponseEntity<RoomImageResponse> completeImageUpload(
+
+            @Parameter(
+                    description = "Unique identifier of the room",
+                    example = "7a103140-b7a6-400d-a987-b430ca3eb868"
+            )
+            @PathVariable UUID roomId,
+
+            @Valid @RequestBody RoomImageCompleteRequest request,
+
+            Authentication authentication) {
+
+        if (!authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_OWNER"))) {
+
+            throw new AccessDeniedException(
+                    "Only room owners can add images"
+            );
+        }
+
+        UUID authenticatedUserId =
+                UUID.fromString(authentication.getName());
+
+        RoomImageResponse response =
+                roomImageService.completeImageUpload(
+                        roomId,
+                        authenticatedUserId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
     }
 }

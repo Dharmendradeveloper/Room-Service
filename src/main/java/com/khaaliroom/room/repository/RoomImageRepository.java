@@ -10,4 +10,11 @@ public interface RoomImageRepository
         extends JpaRepository<RoomImage, UUID> {
 
     List<RoomImage> findByRoomIdOrderByDisplayOrderAsc(UUID roomId);
+
+    long countByRoomId(UUID roomId);
+
+    boolean existsByRoomIdAndDisplayOrder(
+            UUID roomId,
+            Integer displayOrder
+    );
 }

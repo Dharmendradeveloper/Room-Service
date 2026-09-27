@@ -275,4 +275,20 @@ public class RoomService {
             );
         }
     }
+
+    @Transactional(readOnly = true)
+    public void verifyRoomOwner(
+            UUID roomId,
+            UUID authenticatedUserId) {
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Room not found"));
+
+        if (!room.getOwnerId().equals(authenticatedUserId)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to access this room"
+            );
+        }
+    }
 }

@@ -41,6 +41,8 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 //	Swagger or OPEN API
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
+//	AWS Dependencies
+	implementation("software.amazon.awssdk:s3:2.37.0")
 }
 
 tasks.withType<Test> {
