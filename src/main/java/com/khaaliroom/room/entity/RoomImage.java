@@ -27,8 +27,8 @@ public class RoomImage {
     @Column(name = "room_id", nullable = false)
     private UUID roomId;
 
-    @Column(name = "image_url", nullable = false, length = 1000)
-    private String imageUrl;
+    @Column(name = "object_key", nullable = false, length = 1000)
+    private String objectKey;
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;

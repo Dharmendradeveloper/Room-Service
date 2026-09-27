@@ -553,78 +553,14 @@ public class RoomController {
     }
 
     @SecurityRequirement(name = "bearerAuth")
-    @PostMapping("/{roomId}/images")
-    @Operation(
-            summary = "Add room image",
-            description = "Adds image metadata to a room. Only the room owner can add images."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Room image added successfully"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Authentication required"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "User is not the room owner"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Room not found"
-            )
-    })
-    public ResponseEntity<RoomImageResponse> createRoomImage(
-
-            @Parameter(
-                    description = "Unique identifier of the room",
-                    example = "580fe919-5182-4288-a60f-ea998b35ae54"
-            )
-            @PathVariable UUID roomId,
-
-            @Valid @RequestBody RoomImageCreateRequest request,
-
-            Authentication authentication) {
-
-        if (!authentication.getAuthorities().stream()
-                .anyMatch(authority ->
-                        authority.getAuthority().equals("ROLE_OWNER"))) {
-
-            throw new AccessDeniedException(
-                    "Only room owners can add images"
-            );
-        }
-
-        UUID authenticatedUserId =
-                UUID.fromString(authentication.getName());
-
-        RoomImageResponse response =
-                roomImageService.createRoomImage(
-                        roomId,
-                        authenticatedUserId,
-                        request
-                );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
-    }
-
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{roomId}/images/upload-url")
     @Operation(
             summary = "Generate room image upload URL",
             description = """
-                Generates a temporary presigned S3 URL for uploading
-                a room image. Only the room owner can request an
-                upload URL. The URL expires after 10 minutes.
-                """
+                    Generates a temporary presigned S3 URL for uploading
+                    a room image. Only the room owner can request an
+                    upload URL. The URL expires after 10 minutes.
+                    """
     )
     @ApiResponses({
             @ApiResponse(
@@ -691,12 +627,12 @@ public class RoomController {
     @Operation(
             summary = "Complete room image upload",
             description = """
-                Completes a room image upload after the client has
-                uploaded the image directly to S3 using the presigned URL.
-                The server verifies that the image exists in S3 and that
-                its size does not exceed 500 KB before saving the image
-                metadata to PostgreSQL.
-                """
+                    Completes a room image upload after the client has
+                    uploaded the image directly to S3 using the presigned URL.
+                    The server verifies that the image exists in S3 and that
+                    its size does not exceed 500 KB before saving the image
+                    metadata to PostgreSQL.
+                    """
     )
     @ApiResponses({
             @ApiResponse(
@@ -752,5 +688,70 @@ public class RoomController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @DeleteMapping("/{roomId}/images/{imageId}")
+    @Operation(
+            summary = "Delete a room image",
+            description = """
+                    Deletes a room image from Amazon S3 and removes its
+                    metadata from PostgreSQL. Only the owner of the room
+                    can delete its images.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Image deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User is not the room owner"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Room or image not found"
+            )
+    })
+    public ResponseEntity<Void> deleteRoomImage(
+
+            @Parameter(
+                    description = "Unique identifier of the room",
+                    example = "7a103140-b7a6-400d-a987-b430ca3eb868"
+            )
+            @PathVariable UUID roomId,
+
+            @Parameter(
+                    description = "Unique identifier of the image",
+                    example = "8e56b4d8-a6e5-4c48-a827-790abfdda055"
+            )
+            @PathVariable UUID imageId,
+
+            Authentication authentication) {
+
+        if (!authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_OWNER"))) {
+
+            throw new AccessDeniedException(
+                    "Only room owners can delete images"
+            );
+        }
+
+        UUID authenticatedUserId =
+                UUID.fromString(authentication.getName());
+
+        roomImageService.deleteRoomImage(
+                roomId,
+                imageId,
+                authenticatedUserId
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }

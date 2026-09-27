@@ -21,10 +21,15 @@ public record RoomImageResponse(
         UUID roomId,
 
         @Schema(
-                description = "Public URL of the room image",
-                example = "https://example-bucket.s3.amazonaws.com/rooms/580fe919/image-1.jpg"
+                description = """
+                        Temporary presigned URL used to access the private
+                        room image stored in Amazon S3. The URL expires after
+                        a limited period and should not be persisted by the client.
+                        """,
+                example = "https://khaaliroom-room-images-07102024.s3.ap-south-1.amazonaws.com/rooms/580fe919/image-1.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&..."
         )
         String imageUrl,
+
 
         @Schema(
                 description = "Display order of the image. Lower values appear first.",

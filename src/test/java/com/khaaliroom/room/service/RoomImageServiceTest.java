@@ -38,7 +38,7 @@ class RoomImageServiceTest {
         firstImage = RoomImage.builder()
                 .id(UUID.randomUUID())
                 .roomId(roomId)
-                .imageUrl("https://example.com/image-1.jpg")
+                .objectKey("https://example.com/image-1.jpg")
                 .displayOrder(1)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -46,7 +46,7 @@ class RoomImageServiceTest {
         secondImage = RoomImage.builder()
                 .id(UUID.randomUUID())
                 .roomId(roomId)
-                .imageUrl("https://example.com/image-2.jpg")
+                .objectKey("https://example.com/image-2.jpg")
                 .displayOrder(2)
                 .createdAt(LocalDateTime.now())
                 .build();

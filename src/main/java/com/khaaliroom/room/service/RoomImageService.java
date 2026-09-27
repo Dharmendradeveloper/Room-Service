@@ -1,7 +1,6 @@
 package com.khaaliroom.room.service;
 
 import com.khaaliroom.room.dto.RoomImageCompleteRequest;
-import com.khaaliroom.room.dto.RoomImageCreateRequest;
 import com.khaaliroom.room.dto.RoomImageResponse;
 import com.khaaliroom.room.entity.Room;
 import com.khaaliroom.room.entity.RoomImage;
@@ -37,69 +36,11 @@ public class RoomImageService {
                 .toList();
     }
 
-    @Transactional
-    public RoomImageResponse createRoomImage(
-            UUID roomId,
-            UUID authenticatedUserId,
-            RoomImageCreateRequest request) {
-
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Room not found"));
-
-        if (!room.getOwnerId().equals(authenticatedUserId)) {
-            throw new AccessDeniedException(
-                    "You are not authorized to add images to this room"
-            );
-        }
-
-        long imageCount =
-                roomImageRepository.countByRoomId(roomId);
-
-        if (imageCount >= 4) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "A room can have a maximum of 4 images"
-            );
-        }
-
-        if (request.displayOrder() < 1
-                || request.displayOrder() > 4) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Display order must be between 1 and 4"
-            );
-        }
-
-        if (roomImageRepository.existsByRoomIdAndDisplayOrder(
-                roomId,
-                request.displayOrder())) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Display order "
-                            + request.displayOrder()
-                            + " is already in use"
-            );
-        }
-
-        RoomImage image = RoomImage.builder()
-                .roomId(roomId)
-                .imageUrl(request.imageUrl())
-                .displayOrder(request.displayOrder())
-                .build();
-
-        RoomImage savedImage =
-                roomImageRepository.save(image);
-
-        return toResponse(savedImage);
-    }
-    
     private RoomImageResponse toResponse(RoomImage image) {
 
         String downloadUrl =
                 s3Service.generateDownloadUrl(
-                        image.getImageUrl()
+                        image.getObjectKey()
                 );
 
         return new RoomImageResponse(
@@ -176,7 +117,7 @@ public class RoomImageService {
 
         RoomImage image = RoomImage.builder()
                 .roomId(roomId)
-                .imageUrl(objectKey)
+                .objectKey(objectKey)
                 .displayOrder(request.displayOrder())
                 .build();
 
@@ -221,5 +162,34 @@ public class RoomImageService {
                 HttpStatus.BAD_REQUEST,
                 "Uploaded image was not found in S3"
         );
+    }
+
+    @Transactional
+    public void deleteRoomImage(
+            UUID roomId,
+            UUID imageId,
+            UUID authenticatedUserId) {
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Room not found"));
+
+        if (!room.getOwnerId().equals(authenticatedUserId)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to delete images from this room"
+            );
+        }
+
+        RoomImage image =
+                roomImageRepository.findByIdAndRoomId(
+                                imageId,
+                                roomId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Image not found"));
+
+        s3Service.deleteObject(image.getObjectKey());
+
+        roomImageRepository.delete(image);
     }
 }
