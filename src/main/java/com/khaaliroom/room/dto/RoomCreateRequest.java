@@ -3,11 +3,7 @@ package com.khaaliroom.room.dto;
 import com.khaaliroom.room.entity.FurnishingType;
 import com.khaaliroom.room.entity.RoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +26,8 @@ public record RoomCreateRequest(
         String description,
 
         @NotNull(message = "Monthly rent is required")
+        @Digits( integer = 10, fraction = 2,
+                message = "Monthly rent must have at most 2 decimal places" )
         @DecimalMin(
                 value = "0.0",
                 inclusive = false,
@@ -41,6 +39,8 @@ public record RoomCreateRequest(
         )
         BigDecimal monthlyRent,
 
+        @Digits( integer = 10, fraction = 2,
+                message = "Security deposit must have at most 2 decimal places" )
         @DecimalMin(
                 value = "0.0",
                 inclusive = true,
